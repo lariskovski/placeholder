@@ -9,6 +9,36 @@ TOKEN = os.getenv('API_TOKEN')
 client = commands.Bot(command_prefix='.')
 
 
+def get_url(song):
+    video_search = YoutubeSearch(song, max_results=1).to_json()
+    video_id = str(json.loads(video_search)['videos'][0]['id'])
+    return 'https://www.youtube.com/watch?v='+ video_id
+
+
+def download_song(song, file_path):
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'outtmpl': file_path,
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '192'
+        }],
+    }
+
+    # Check if input is already url format
+    # If not search for keywords on youtube
+    # and return url
+    if "http" in song:
+        url = song
+    else:
+        url = get_url(song)
+
+    # Downloads audio file from youtube
+    with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+        ydl.download([url])
+
+
 @client.command(brief='This command plus an audio name, plays it',
                 name="play",
                 aliases=['p'])
@@ -29,28 +59,7 @@ async def play(ctx, *, message):
     if voice_channel is not None:
         vc = await voice_channel.connect()
 
-    ydl_opts = {
-        'format': 'bestaudio/best',
-        'outtmpl': file_path,
-        'postprocessors': [{
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'mp3',
-            'preferredquality': '192'
-        }],
-    }
-
-    # Check if input is already url format
-    if "http" in message:
-        song = message
-    # If not search for keywords on youtube
-    else:
-        video_search = YoutubeSearch(message, max_results=1).to_json()
-        video_id = str(json.loads(video_search)['videos'][0]['id'])
-        song = 'https://www.youtube.com/watch?v='+ video_id
-
-    # Downloads audio file from youtube then plays it
-    with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-        ydl.download([song])
+    download_song(message, file_path=file_path)
 
     vc.play(discord.FFmpegPCMAudio(file_path))
     # while vc.is_playing():

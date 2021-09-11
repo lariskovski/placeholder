@@ -12,13 +12,13 @@ client = commands.Bot(command_prefix='.')
 @client.command(brief='This command plus an audio name, plays it',
                 name="play")
 async def play(ctx, *, message):
-    filename = "song.mp3"
+    file_path = f"{os.path.abspath(os.getcwd())}/song.mp3"
 
     # Check if file exists if does, removes it
-    song_there = os.path.isfile(filename)
+    song_there = os.path.isfile(file_path)
     try:
         if song_there:
-            os.remove(filename)
+            os.remove(file_path)
     except PermissionError:
         await ctx.send("Wait for the current playing song to end or use the 'stop' command")
         return
@@ -30,6 +30,7 @@ async def play(ctx, *, message):
 
     ydl_opts = {
         'format': 'bestaudio/best',
+        'outtmpl': file_path,
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',
@@ -50,15 +51,10 @@ async def play(ctx, *, message):
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
         ydl.download([song])
 
-    
-    for file in os.listdir("./"):
-        if file.endswith(".mp3"):
-            os.rename(file, filename)
-
-    vc.play(discord.FFmpegPCMAudio(filename))
-    while vc.is_playing():
-            sleep(.1)
-    await vc.disconnect()
+    vc.play(discord.FFmpegPCMAudio(file_path))
+    # while vc.is_playing():
+    #         sleep(.1)
+    # await vc.disconnect()
 
     # Delete command after the audio is done playing.
     await ctx.message.delete()

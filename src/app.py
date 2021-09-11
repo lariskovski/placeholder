@@ -10,7 +10,8 @@ client = commands.Bot(command_prefix='.')
 
 
 @client.command(brief='This command plus an audio name, plays it',
-                name="play")
+                name="play",
+                aliases=['p'])
 async def play(ctx, *, message):
     file_path = f"{os.path.abspath(os.getcwd())}/song.mp3"
 

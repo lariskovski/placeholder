@@ -1,3 +1,5 @@
+from requests import get
+from youtube_dl import YoutubeDL
 from youtube_search import YoutubeSearch
 from discord.ext import commands
 import youtube_dl
@@ -9,74 +11,62 @@ TOKEN = os.getenv('API_TOKEN')
 client = commands.Bot(command_prefix='.')
 
 
-def get_url(song):
-    video_search = YoutubeSearch(song, max_results=1).to_json()
-    video_id = str(json.loads(video_search)['videos'][0]['id'])
-    return 'https://www.youtube.com/watch?v='+ video_id
-
-
-def download_song(song, file_path):
-    ydl_opts = {
-        'format': 'bestaudio/best',
-        'outtmpl': file_path,
-        'postprocessors': [{
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'mp3',
-            'preferredquality': '192'
-        }],
-    }
-
-    # Check if input is already url format
-    # If not search for keywords on youtube
-    # and return url
-    if "http" in song:
-        url = song
-    else:
-        url = get_url(song)
-
-    # Downloads audio file from youtube
-    with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-        ydl.download([url])
-
-
-@client.command(brief='This command plus an audio name, plays it',
-                name="play",
-                aliases=['p'])
-async def play(ctx, *, message):
+def delete_file():
     file_path = f"{os.path.abspath(os.getcwd())}/song.mp3"
-
     # Check if file exists if does, removes it
     song_there = os.path.isfile(file_path)
     try:
         if song_there:
             os.remove(file_path)
     except PermissionError:
-        await ctx.send("Wait for the current playing song to end or use the 'stop' command")
         return
+
+
+def download_file(arg):
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'outtmpl': 'song.mp3',
+        'noplaylist':'True',
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '192'
+        }],
+    }
+    with YoutubeDL(ydl_opts) as ydl:
+        try:
+            get(arg) 
+        except:
+            video = ydl.extract_info(f"ytsearch:{arg}", download=True)['entries'][0]
+        else:
+            video = ydl.extract_info(arg, download=False)
+    print(f"Title: {video['title']} Id:{video['id']}")
+
+
+@client.command(brief='This command plus an audio name, plays it',
+                name="play")
+async def play(ctx, *, text):
+    import asyncio
+    delete_file()
 
     # Gets voice channel of message author
     voice_channel = ctx.author.voice.channel
     if voice_channel is not None:
-        vc = await voice_channel.connect()
-
-    download_song(message, file_path=file_path)
-
-    vc.play(discord.FFmpegPCMAudio(file_path))
-    # while vc.is_playing():
-    #         sleep(.1)
-    # await vc.disconnect()
-
-    # Delete command after the audio is done playing.
-    await ctx.message.delete()
-
-
-@client.command()
-async def leave(ctx):
-    voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
-    if voice.is_connected():
-        await voice.disconnect()
+        try:
+            global voice
+            voice = await voice_channel.connect()
+        except: pass
     else:
-        await ctx.send("The bot is not connected to a voice channel.")
+        await ctx.send(str(ctx.author.name) + "is not in a channel.")
+    if not voice.is_playing():
+        song = download_file(text)
+        voice.play(discord.FFmpegPCMAudio("file:song.mp3"))
+        # Sleep while audio is playing.
+        while voice.is_playing() and voice.is_paused():
+            await asyncio.sleep(1)
+        await ctx.voice_client.disconnect()
+    else:
+        print('Music is already playing')
 
 
 @client.command()

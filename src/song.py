@@ -1,4 +1,5 @@
 from youtube_dl import YoutubeDL, utils
+import os
 
 class Song:
     DOWNLOAD_DIR: str = 'downloads'
@@ -23,10 +24,13 @@ class Song:
                                 'preferredquality': '192'
                             }],
                          }
+    
         with YoutubeDL(ydl_opts) as ydl:
             hyperlink: bool = False
+
             if 'youtube.com' in arg:
                 hyperlink = True
+            
             try:
                 if hyperlink:
                     video = ydl.extract_info(arg, download=False)
@@ -40,19 +44,27 @@ class Song:
 
 
     def download(self) -> str:
-        ydl_opts = {
-            'format': 'bestaudio/best',
-            'outtmpl': self.file_path,
-            'noplaylist':'True',
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-                'preferredquality': '192'
-            }],
-        }
+        # Create Downloads folder if not exists
+        try:
+            os.makedirs(Song.DOWNLOAD_DIR)
+        except OSError as e:
+            print(e)
 
-        with YoutubeDL(ydl_opts) as ydl:
-            ydl.download([self.url])
+        ydl_opts: dict = {
+                            'format': 'bestaudio/best',
+                            'outtmpl': self.file_path,
+                            'noplaylist':'True',
+                            'postprocessors': [{
+                                'key': 'FFmpegExtractAudio',
+                                'preferredcodec': 'mp3',
+                                'preferredquality': '192'
+                            }],
+                         }
+
+        # Downloads song if it doesn't exist
+        if not os.path.exists(self.file_path):
+            with YoutubeDL(ydl_opts) as ydl:
+                ydl.download([self.url])
 
     
     def hash_title(self) -> str:
@@ -63,11 +75,13 @@ class Song:
 
     @classmethod
     def remove_older_files(cls) -> None:
-        import os
-        files_in_dir: list = os.listdir(cls.DOWNLOAD_DIR)
-        full_path : list= [f"{cls.DOWNLOAD_DIR}/{file}" for file in files_in_dir]
+        try:
+            files_in_dir: list = os.listdir(cls.DOWNLOAD_DIR)
+            full_path : list= [f"{cls.DOWNLOAD_DIR}/{file}" for file in files_in_dir]
 
-        if len(files_in_dir) >= 10:
-            oldest_file = min(full_path, key=os.path.getctime)
-            os.remove(oldest_file)
-
+            if len(files_in_dir) >= 10:
+                oldest_file = min(full_path, key=os.path.getctime)
+                os.remove(oldest_file)
+        # Ignores exception when download dir is not yet created
+        except FileNotFoundError as e:
+            print(e)

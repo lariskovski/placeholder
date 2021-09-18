@@ -1,6 +1,5 @@
 from discord.ext import commands
-# from discord.ext.commands import errors
-from os import getenv, path, makedirs
+from os import getenv
 import asyncio
 import discord
 
@@ -19,19 +18,6 @@ client = commands.Bot(command_prefix='.')
                 aliases=['p', 'resume', 'unpause', 'continue', 'PLAY'])
 async def play(ctx, *, text=None):
 
-    # Create Downloads folder if not exists
-    try:
-        makedirs(Song.DOWNLOAD_DIR)
-    except OSError as e:
-        print(e)
-
-    # Keep donwloaded songs under 10
-    Song.remove_older_files()
-
-    # Creates empty queue
-    global queue
-    queue = SongQueue()
-
     # Gets voice channel of message author
     voice_channel = ctx.author.voice.channel
     if voice_channel is not None:
@@ -44,22 +30,31 @@ async def play(ctx, *, text=None):
 
     # If text is set/sent
     if text:
+        # Keep donwloaded songs under 10
+        Song.remove_older_files()
+
+        # Creates empty queue
+        global queue
+        queue = SongQueue()
+
         song = Song(text)
 
+        # Song is inappropriate when requires login
         if song.is_appropriate == False:
             await ctx.send("Youtube said this video is inappropriate.")
             return
 
-        # Downloads song if it doesn't exist
-        if not path.exists(song.file_path):
-            song.download()
+        # Download song if doesn't already exists on dir
+        song.download()
+
         queue.add_song(song)
 
         if voice.is_playing():
             # Sleep while audio is playing.
             while voice.is_playing():
                 await asyncio.sleep(1)
-            # print(queue.queue)
+            
+            # Get and play next song in line if there is any
             next_song = queue.get_next_song()
             if next_song != None:
                 voice.play(discord.FFmpegPCMAudio(next_song.file_path))
@@ -70,7 +65,7 @@ async def play(ctx, *, text=None):
             # print(next_song)
             voice.play(discord.FFmpegPCMAudio(next_song.file_path))
     
-    # If paused, resumes
+    # If text is not set resumes paused song
     else:
         if voice.is_paused():
             voice.resume()

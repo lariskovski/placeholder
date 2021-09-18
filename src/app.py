@@ -4,15 +4,20 @@ import os
 
 from downloader import download_song
 from queue_mgmt import SongQueue
+from Song import Song
 
 TOKEN = os.getenv('API_TOKEN')
 client = commands.Bot(command_prefix='.')
 
 
-@client.command(brief='This command plus an audio name, plays it',
-                name="play")
+@client.command(brief='Plays the a song by name or url',
+                name="play",
+                aliases=['p'])
 async def play(ctx, *, text=None):
     import asyncio
+
+    # Keep donwloaded songs under 10
+    Song.remove_older_files()
 
     # Creates empty queue
     global queue
@@ -35,23 +40,24 @@ async def play(ctx, *, text=None):
         else:
             await ctx.send("The audio is not paused.")
 
-    song = download_song(text)
+    song = Song(text)
+    download_song(song)
     queue.add_song(song)
 
     if voice.is_playing():
         # Sleep while audio is playing.
         while voice.is_playing():
             await asyncio.sleep(1)
-        # await ctx.voice_client.disconnect()
-        print(queue.queue)
+        # print(queue.queue)
         next_song = queue.get_next_song()
         if next_song != None:
-            voice.play(discord.FFmpegPCMAudio(next_song))
-    
+            voice.play(discord.FFmpegPCMAudio(next_song.file_path))
+
     # runs the first time
     else:
         next_song = queue.get_next_song()
-        voice.play(discord.FFmpegPCMAudio(next_song))
+        # print(next_song)
+        voice.play(discord.FFmpegPCMAudio(next_song.file_path))
 
 
 @client.command()
@@ -71,7 +77,12 @@ async def next(ctx):
 
 @client.command()
 async def current(ctx):
-    await ctx.send(queue.current)
+    await ctx.send(f"Currently playing: {queue.current.title}")
+
+
+@client.command()
+async def leave(ctx):
+    await ctx.voice_client.disconnect()
 
 
 # Outputs on server terminal ready message

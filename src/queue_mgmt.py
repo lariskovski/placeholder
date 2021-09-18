@@ -6,7 +6,9 @@ class SongQueue:
         self.current = None
 
     def add_song(self, song) -> None:
-        print(f'Added {song} to queue.')
+        # print(f'Added {song.title} to queue.')
+        if self.current == None:
+            self.current = song
         self.queue.appendleft(song)
     
     def get_next_song(self) -> str or None:

@@ -15,6 +15,7 @@ async def play(ctx, *, text=None):
     import asyncio
 
     # Creates empty queue
+    global queue
     queue = SongQueue()
 
     # Gets voice channel of message author
@@ -66,6 +67,11 @@ async def pause(ctx):
 async def next(ctx):
     voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
     voice.stop()
+
+
+@client.command()
+async def current(ctx):
+    await ctx.send(queue.current)
 
 
 # Outputs on server terminal ready message

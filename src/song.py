@@ -58,7 +58,9 @@ class Song:
         # Downloads song if it doesn't exist
         if not os.path.exists(self.file_path):
             # Create Downloads folder if not exists
-            os.makedirs(Song.DOWNLOAD_DIR)
+            try:
+                os.makedirs(Song.DOWNLOAD_DIR)
+            except: pass
             # Keep donwloaded songs under 10
             self.remove_older_files()
 

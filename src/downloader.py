@@ -58,6 +58,7 @@ def download_song(song: str) -> str:
     ydl_opts = {
         'format': 'bestaudio/best',
         'outtmpl': file_path,
+        'noplaylist':'True',
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',

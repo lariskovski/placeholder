@@ -1,12 +1,13 @@
 from discord.ext import commands
+import asyncio
 import discord
-import os
+from os import getenv, path
 
 from downloader import download_song
 from queue_mgmt import SongQueue
 from Song import Song
 
-TOKEN = os.getenv('API_TOKEN')
+TOKEN = getenv('API_TOKEN')
 client = commands.Bot(command_prefix='.')
 
 
@@ -14,7 +15,6 @@ client = commands.Bot(command_prefix='.')
                 name="play",
                 aliases=['p'])
 async def play(ctx, *, text=None):
-    import asyncio
 
     # Keep donwloaded songs under 10
     Song.remove_older_files()
@@ -41,7 +41,9 @@ async def play(ctx, *, text=None):
             await ctx.send("The audio is not paused.")
 
     song = Song(text)
-    download_song(song)
+    # Downloads song if it doesn't exist
+    if not path.exists(song.file_path):
+        download_song(song)
     queue.add_song(song)
 
     if voice.is_playing():

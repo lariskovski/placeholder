@@ -7,6 +7,9 @@ from song_queue import SongQueue
 from song import Song
 
 TOKEN = getenv('API_TOKEN')
+if TOKEN == None:
+    raise EnvironmentError('Please set API_TOKEN environment variable.')
+
 client = commands.Bot(command_prefix='.')
 
 

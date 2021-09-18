@@ -1,4 +1,5 @@
 from discord.ext import commands
+# from discord.ext.commands import errors
 from os import getenv, path, makedirs
 import asyncio
 import discord
@@ -15,7 +16,7 @@ client = commands.Bot(command_prefix='.')
 
 @client.command(brief='Plays a song by name or url',
                 name="play",
-                aliases=['p', 'resume', 'unpause', 'continue'])
+                aliases=['p', 'resume', 'unpause', 'continue', 'PLAY'])
 async def play(ctx, *, text=None):
 
     # Create Downloads folder if not exists
@@ -72,7 +73,7 @@ async def play(ctx, *, text=None):
             await ctx.send("The audio is not paused.")
 
 
-@client.command()
+@client.command(aliases=['stop'])
 async def pause(ctx):
     voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
     if voice.is_playing():

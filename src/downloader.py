@@ -1,38 +1,63 @@
-from youtube_search import YoutubeSearch
+from youtube_dl import YoutubeDL
+from requests import get
 import youtube_dl
-import json
-import os
 
 
-def search_song(text):
-    # Check if input is already url format
-    if "http" in text:
-        song = text
-    # If not search for keywords on youtube
-    else:
-        video_search = YoutubeSearch(song, max_results=1).to_json()
-        video_id = str(json.loads(video_search)['videos'][0]['id'])
-        print(str(json.loads(video_search)['videos']))
-        song = 'https://www.youtube.com/watch?v='+ video_id    
-    return song
+DOWNLOAD_DIR = 'downloads'
 
 
-def download_song(song: str, file_path=None) -> None:
-    # if file_path == None:
-    #     file_path = f"{os.path.abspath(os.getcwd())}/song.mp3"
+def hash_title(title) -> str:
+    import hashlib
+    hash = int(hashlib.sha256(title.encode('utf-8')).hexdigest(), 16) % 10**8
+    return str(hash)
 
-    # Check if file exists if does, removes it
-    # song_there = os.path.isfile(file_path)
-    # try:
-    #     if song_there:
-    #         os.remove(file_path)
-    # except PermissionError:
-    #     print("Wait for the current playing song to end or use the 'stop' command")
-    #     return
 
+def remove_older_files() -> None:
+    import os
+    # downloads_dir = f"{os.path.abspath(os.getcwd())}/{DOWNLOAD_DIR}"
+    files_in_dir: list = os.listdir(DOWNLOAD_DIR)
+    full_path : list= [f"{DOWNLOAD_DIR}/{file}" for file in files_in_dir]
+
+    if len(files_in_dir) >= 10:
+        oldest_file = min(full_path, key=os.path.getctime)
+        os.remove(oldest_file)
+
+
+def get_song_info(arg) -> dict:
     ydl_opts = {
         'format': 'bestaudio/best',
-        'outtmpl': '%(title)s.%(ext)s',
+        'noplaylist':'True',
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '192'
+        }],
+    }
+    with YoutubeDL(ydl_opts) as ydl:
+        try:
+            get(arg) 
+        except:
+            video = ydl.extract_info(f"ytsearch:{arg}", download=False)['entries'][0]
+        else:
+            video = ydl.extract_info(arg, download=False)
+        # print(f"[log] title: {video['title']}")
+
+        return {'title': video['title'],
+                'url': f"https://www.youtube.com/watch?v={video['id']}"}
+
+
+def download_song(song: str) -> str:
+    remove_older_files()
+
+    song_info = get_song_info(song)
+    
+    title = f"{hash_title(song_info['title'])}.mp3"
+    file_path =  f'{DOWNLOAD_DIR}/{title}'
+
+    # 'outtmpl': '%(title)s.%(ext)s'
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'outtmpl': file_path,
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',
@@ -40,8 +65,13 @@ def download_song(song: str, file_path=None) -> None:
         }],
     }
 
-    song_url = search_song(song)
+    song_url = song_info['url']
 
-    # Downloads audio file from youtube then plays it
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
         ydl.download([song_url])
+
+    return file_path
+
+
+if __name__ == "__main__":
+    download_song('https://www.youtube.com/watch?v=9gsAz6S_zSw')

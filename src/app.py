@@ -1,8 +1,4 @@
-from requests import get
-from youtube_dl import YoutubeDL
-from youtube_search import YoutubeSearch
 from discord.ext import commands
-# from time import sleep
 import discord
 import os
 
@@ -12,43 +8,10 @@ TOKEN = os.getenv('API_TOKEN')
 client = commands.Bot(command_prefix='.')
 
 
-def delete_file(file_path):
-    # Check if file exists if does, removes it
-    song_there = os.path.isfile(file_path)
-    try:
-        if song_there:
-            os.remove(file_path)
-    except PermissionError:
-        return
-
-
-def download_file(arg, file_path):
-    ydl_opts = {
-        'format': 'bestaudio/best',
-        'outtmpl': file_path,
-        'noplaylist':'True',
-        'postprocessors': [{
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'mp3',
-            'preferredquality': '192'
-        }],
-    }
-    with YoutubeDL(ydl_opts) as ydl:
-        try:
-            get(arg) 
-        except:
-            video = ydl.extract_info(f"ytsearch:{arg}", download=True)['entries'][0]
-        else:
-            video = ydl.extract_info(arg, download=False)
-    print(f"Title: {video['title']} Id:{video['id']}")
-
-
 @client.command(brief='This command plus an audio name, plays it',
                 name="play")
 async def play(ctx, *, text):
     import asyncio
-    file_path = f"{os.path.abspath(os.getcwd())}/song.mp3"
-    delete_file(file_path)
 
     # Gets voice channel of message author
     voice_channel = ctx.author.voice.channel
@@ -59,15 +22,16 @@ async def play(ctx, *, text):
         except: pass
     else:
         await ctx.send(str(ctx.author.name) + "is not in a channel.")
-    if not voice.is_playing():
-        song = download_file(text, file_path)
-        voice.play(discord.FFmpegPCMAudio(file_path))
+
+    if voice.is_playing():
+        print('Music is already playing')
+    else:
+        song = download_song(text)
+        voice.play(discord.FFmpegPCMAudio(song))
         # Sleep while audio is playing.
         while voice.is_playing():
             await asyncio.sleep(1)
         await ctx.voice_client.disconnect()
-    else:
-        print('Music is already playing')
 
 
 @client.command()

@@ -30,6 +30,23 @@ class Song:
         self.url = video['webpage_url']
         self.file_path = f'{self.DOWNLOAD_DIR}/{self.hashed_title}.mp3'
 
+
+    def download(self) -> str:
+        ydl_opts = {
+            'format': 'bestaudio/best',
+            'outtmpl': self.file_path,
+            'noplaylist':'True',
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192'
+            }],
+        }
+
+        with YoutubeDL(ydl_opts) as ydl:
+            ydl.download([self.url])
+
+
     @classmethod
     def remove_older_files(cls) -> None:
         import os

@@ -44,12 +44,6 @@ class Song:
 
 
     def download(self) -> str:
-        # Create Downloads folder if not exists
-        try:
-            os.makedirs(Song.DOWNLOAD_DIR)
-        except OSError as e:
-            print(e)
-
         ydl_opts: dict = {
                             'format': 'bestaudio/best',
                             'outtmpl': self.file_path,
@@ -63,6 +57,11 @@ class Song:
 
         # Downloads song if it doesn't exist
         if not os.path.exists(self.file_path):
+            # Create Downloads folder if not exists
+            os.makedirs(Song.DOWNLOAD_DIR)
+            # Keep donwloaded songs under 10
+            self.remove_older_files()
+
             with YoutubeDL(ydl_opts) as ydl:
                 ydl.download([self.url])
 

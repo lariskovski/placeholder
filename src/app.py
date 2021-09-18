@@ -32,9 +32,6 @@ async def play(ctx, *, text=None):
 
     # If text is set/sent
     if text:
-        # Keep donwloaded songs under 10
-        Song.remove_older_files()
-
         # Creates empty queue
         global queue
         queue = SongQueue()

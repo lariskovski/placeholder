@@ -1,22 +1,28 @@
 from youtube_dl import YoutubeDL, utils
-from requests import get
-
 
 class Song:
-    DOWNLOAD_DIR = 'downloads'
+    DOWNLOAD_DIR: str = 'downloads'
 
     def __init__(self, arg) -> None:
         self.is_appropriate: bool = True
+        self.info: dict = self.collect_info(arg)
 
-        ydl_opts = {
-            'format': 'bestaudio/best',
-            'noplaylist':'True',
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-                'preferredquality': '192'
-            }],
-        }
+        self.url: str = self.info['webpage_url'] if self.is_appropriate else None
+        self.title: str = self.info['title'] if self.is_appropriate else None
+        self.hashed_title: str = self.hash_title() if self.is_appropriate else None
+        self.file_path: str = f'{self.DOWNLOAD_DIR}/{self.hashed_title}.mp3' if self.is_appropriate else None
+
+
+    def collect_info(self, arg)-> dict:
+        ydl_opts: dict = {
+                            'format': 'bestaudio/best',
+                            'noplaylist':'True',
+                            'postprocessors': [{
+                                'key': 'FFmpegExtractAudio',
+                                'preferredcodec': 'mp3',
+                                'preferredquality': '192'
+                            }],
+                         }
         with YoutubeDL(ydl_opts) as ydl:
             hyperlink: bool = False
             if 'youtube.com' in arg:
@@ -29,11 +35,8 @@ class Song:
             except utils.DownloadError as e:
                 self.is_appropriate = False
                 print(f"logs: {e}")
-
-        self.title = video['title'] if self.is_appropriate else None
-        self.hashed_title = self.hash_title() if self.is_appropriate else None
-        self.url = video['webpage_url'] if self.is_appropriate else None
-        self.file_path = f'{self.DOWNLOAD_DIR}/{self.hashed_title}.mp3' if self.is_appropriate else None
+            
+            return video
 
 
     def download(self) -> str:

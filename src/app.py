@@ -10,7 +10,7 @@ TOKEN = getenv('API_TOKEN')
 client = commands.Bot(command_prefix='.')
 
 
-@client.command(brief='Plays the a song by name or url',
+@client.command(brief='Plays a song by name or url',
                 name="play",
                 aliases=['p', 'resume', 'unpause', 'continue'])
 async def play(ctx, *, text=None):

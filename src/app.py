@@ -3,9 +3,8 @@ import asyncio
 import discord
 from os import getenv, path
 
-from downloader import download_song
-from queue_mgmt import SongQueue
-from Song import Song
+from song_queue import SongQueue
+from song import Song
 
 TOKEN = getenv('API_TOKEN')
 client = commands.Bot(command_prefix='.')
@@ -43,7 +42,7 @@ async def play(ctx, *, text=None):
     song = Song(text)
     # Downloads song if it doesn't exist
     if not path.exists(song.file_path):
-        download_song(song)
+        song.download()
     queue.add_song(song)
 
     if voice.is_playing():

@@ -12,6 +12,9 @@ if TOKEN == None:
 
 client = commands.Bot(command_prefix='.')
 
+# Creates empty queue
+global queue
+queue = SongQueue()
 
 @client.command(brief='Plays a song by name or url',
                 name="play",
@@ -32,10 +35,6 @@ async def play(ctx, *, text=None):
 
     # If text is set/sent
     if text:
-        # Creates empty queue
-        global queue
-        queue = SongQueue()
-
         song = Song(text)
 
         # Song is inappropriate when requires login
@@ -87,9 +86,9 @@ async def next(ctx):
     voice.stop()
 
 
-# @client.command()
-# async def current(ctx):
-#     await ctx.send(f"Currently playing: {queue.current.title}")
+@client.command()
+async def current(ctx):
+    await ctx.send(f"Currently playing: {queue.current.title}")
 
 
 @client.command()

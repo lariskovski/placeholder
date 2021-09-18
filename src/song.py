@@ -1,8 +1,6 @@
 from youtube_dl import YoutubeDL
 from requests import get
 
-from helper import hash_title
-
 
 class Song:
     DOWNLOAD_DIR = 'downloads'
@@ -26,7 +24,7 @@ class Song:
                 video = ydl.extract_info(arg, download=False)
 
         self.title = video['title']
-        self.hashed_title = hash_title(self.title)
+        self.hashed_title = self.hash_title()
         self.url = video['webpage_url']
         self.file_path = f'{self.DOWNLOAD_DIR}/{self.hashed_title}.mp3'
 
@@ -46,6 +44,12 @@ class Song:
         with YoutubeDL(ydl_opts) as ydl:
             ydl.download([self.url])
 
+    
+    def hash_title(self) -> str:
+        import hashlib
+        hash = int(hashlib.sha256(self.title.encode('utf-8')).hexdigest(), 16) % 10**8
+        return str(hash)
+
 
     @classmethod
     def remove_older_files(cls) -> None:
@@ -56,3 +60,4 @@ class Song:
         if len(files_in_dir) >= 10:
             oldest_file = min(full_path, key=os.path.getctime)
             os.remove(oldest_file)
+

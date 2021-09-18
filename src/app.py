@@ -11,8 +11,7 @@ TOKEN = os.getenv('API_TOKEN')
 client = commands.Bot(command_prefix='.')
 
 
-def delete_file():
-    file_path = f"{os.path.abspath(os.getcwd())}/song.mp3"
+def delete_file(file_path):
     # Check if file exists if does, removes it
     song_there = os.path.isfile(file_path)
     try:
@@ -22,10 +21,10 @@ def delete_file():
         return
 
 
-def download_file(arg):
+def download_file(arg, file_path):
     ydl_opts = {
         'format': 'bestaudio/best',
-        'outtmpl': 'song.mp3',
+        'outtmpl': file_path,
         'noplaylist':'True',
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
@@ -47,7 +46,8 @@ def download_file(arg):
                 name="play")
 async def play(ctx, *, text):
     import asyncio
-    delete_file()
+    file_path = f"{os.path.abspath(os.getcwd())}/song.mp3"
+    delete_file(file_path)
 
     # Gets voice channel of message author
     voice_channel = ctx.author.voice.channel
@@ -59,10 +59,10 @@ async def play(ctx, *, text):
     else:
         await ctx.send(str(ctx.author.name) + "is not in a channel.")
     if not voice.is_playing():
-        song = download_file(text)
-        voice.play(discord.FFmpegPCMAudio("file:song.mp3"))
+        song = download_file(text, file_path)
+        voice.play(discord.FFmpegPCMAudio(file_path))
         # Sleep while audio is playing.
-        while voice.is_playing() and voice.is_paused():
+        while voice.is_playing():
             await asyncio.sleep(1)
         await ctx.voice_client.disconnect()
     else:

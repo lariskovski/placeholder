@@ -1,5 +1,5 @@
 from discord.ext import commands
-from os import getenv, path
+from os import getenv, path, makedirs
 import asyncio
 import discord
 
@@ -14,6 +14,12 @@ client = commands.Bot(command_prefix='.')
                 name="play",
                 aliases=['p', 'resume', 'unpause', 'continue'])
 async def play(ctx, *, text=None):
+
+    # Create Downloads folder if not exists
+    try:
+        makedirs(Song.DOWNLOAD_DIR)
+    except OSError as e:
+        print(e)
 
     # Keep donwloaded songs under 10
     Song.remove_older_files()

@@ -19,14 +19,16 @@ client = commands.Bot(command_prefix='.')
 async def play(ctx, *, text=None):
 
     # Gets voice channel of message author
-    voice_channel = ctx.author.voice.channel
-    if voice_channel is not None:
+    author_voice_channel = ctx.author.voice
+    if author_voice_channel is not None:
+        voice_channel = author_voice_channel.channel
         try:
             global voice
             voice = await voice_channel.connect()
         except: pass
     else:
-        await ctx.send(str(ctx.author.name) + "is not in a channel.")
+        await ctx.send(str(ctx.author.name) + " is not in a channel.")
+        return
 
     # If text is set/sent
     if text:

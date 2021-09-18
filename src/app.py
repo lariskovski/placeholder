@@ -45,6 +45,11 @@ async def play(ctx, *, text=None):
     # If text is set/sent
     if text:
         song = Song(text)
+
+        if song.is_appropriate == False:
+            await ctx.send("Youtube said this video is inappropriate.")
+            return
+
         # Downloads song if it doesn't exist
         if not path.exists(song.file_path):
             song.download()

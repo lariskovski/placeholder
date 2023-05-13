@@ -10,7 +10,7 @@ TOKEN = getenv('API_TOKEN')
 if TOKEN == None:
     raise EnvironmentError('Please set API_TOKEN environment variable.')
 
-client = commands.Bot(command_prefix='.')
+client = commands.Bot(command_prefix='.', intents=discord.Intents.all())
 
 # Creates empty queue
 global queue

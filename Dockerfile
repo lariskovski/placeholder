@@ -3,15 +3,16 @@ FROM alpine:3.13
 WORKDIR /src
 
 RUN apk add --no-cache  \
+    libevent-dev        \
+    python3-dev         \
+    build-base          \
+    libffi-dev          \
+    musl-dev            \
     python3             \
     py3-pip             \
-    python3-dev         \
-    libevent-dev        \
+    ffmpeg              \
     make                \
-    musl-dev            \
-    libffi-dev          \
-    gcc                 \
-    ffmpeg
+    gcc
 
 COPY requirements.txt .
 

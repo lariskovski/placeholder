@@ -18,7 +18,7 @@ queue = SongQueue()
 
 @client.command(brief='Plays a song by name or url',
                 name="play",
-                aliases=['p', 'resume', 'unpause', 'continue', 'PLAY'])
+                aliases=['p', 'PLAY'])
 async def play(ctx, *, text=None):
 
     # Gets voice channel of message author
@@ -39,13 +39,14 @@ async def play(ctx, *, text=None):
 
         # Song is inappropriate when requires login
         if song.is_appropriate == False:
-            await ctx.send("Youtube said this video is inappropriate.")
+            await ctx.send("Youtube flagged the song as inappropriate. Can't play it.")
             return
 
         # Download song if doesn't already exists on dir
         song.download()
 
         queue.add_song(song)
+        await ctx.send(f"Added {song.title} to queue.")
 
         if voice.is_playing():
             # Sleep while audio is playing.
@@ -65,30 +66,46 @@ async def play(ctx, *, text=None):
     
     # If text is not set resumes paused song
     else:
-        if voice.is_paused():
-            voice.resume()
-        else:
-            await ctx.send("The audio is not paused.")
+        await ctx.send("Tell me a song to play.")
 
 
-@client.command(aliases=['stop'])
-async def pause(ctx):
+@client.command()
+async def stop(ctx):
     voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
     if voice.is_playing():
-        voice.pause()
+        voice.stop()
+        await ctx.send("Stopped and cleared queue.")
     else:
-        await ctx.send("Currently no audio is playing.")
+        await ctx.send("No audio is playing.")
 
 
 @client.command()
 async def next(ctx):
-    voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
-    voice.stop()
+    # Gets voice channel of message author
+    author_voice_channel = ctx.author.voice
+    if author_voice_channel is not None:
+        voice_channel = author_voice_channel.channel
+        try:
+            global voice
+            voice = await voice_channel.connect()
+        except: pass
+    else:
+        await ctx.send(str(ctx.author.name) + " is not in a channel.")
+        return
+    
+    # Get and play next song in line if there is any
+    next_song = queue.get_next_song()
+    if next_song != None:
+        voice.stop()
+        voice.play(discord.FFmpegPCMAudio(next_song.file_path))
+        await ctx.send(f"Now playing: {queue.current.title}")
+    else:
+        await ctx.send("No more songs in queue.")
 
 
 @client.command()
 async def current(ctx):
-    await ctx.send(f"Currently playing: {queue.current.title}")
+    await ctx.send(f"Playing: {queue.current.title}")
 
 
 @client.command()
@@ -99,7 +116,6 @@ async def leave(ctx):
 # Outputs on server terminal ready message
 @client.event
 async def on_ready():
-    print(f'We have logged in as {client.user}')
-
+    print(f'We have logged in as {client.user} and are ready to play music!')
 
 client.run(TOKEN)

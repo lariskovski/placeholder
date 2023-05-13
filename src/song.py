@@ -81,7 +81,7 @@ class Song:
             files_in_dir: list = os.listdir(cls.DOWNLOAD_DIR)
             full_path : list= [f"{cls.DOWNLOAD_DIR}/{file}" for file in files_in_dir]
 
-            if len(files_in_dir) >= 10:
+            if len(files_in_dir) >= 100:
                 oldest_file = min(full_path, key=os.path.getctime)
                 os.remove(oldest_file)
         # Ignores exception when download dir is not yet created

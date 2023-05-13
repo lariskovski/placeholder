@@ -1,4 +1,4 @@
-from youtube_dl import YoutubeDL, utils
+from yt_dlp import YoutubeDL, utils
 import os
 
 class Song:
@@ -48,6 +48,7 @@ class Song:
                             'format': 'bestaudio/best',
                             'outtmpl': self.file_path,
                             'noplaylist':'True',
+                            'keepvideo': 'True',
                             'postprocessors': [{
                                 'key': 'FFmpegExtractAudio',
                                 'preferredcodec': 'mp3',
